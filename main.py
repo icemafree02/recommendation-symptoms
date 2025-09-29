@@ -8,11 +8,15 @@ from sklearn.preprocessing import LabelEncoder
 df = pd.read_csv('D:\symptoms_recommendation\data.csv')
 df
 
+#small EDA dataset.
+
 df.duplicated().sum()
 
 df = df.drop_duplicates()
 
 df.duplicated().sum()
+
+# Apply json format to python.
 
 summary = df['summary'].apply(json.loads)
 summary
@@ -59,6 +63,8 @@ idk_symtopms_answers
 yes_symptoms = summary.apply(lambda x: x['yes_symptoms'])
 yes_symptoms
 
+# Extract the symptoms of patient they are experiencing.
+
 yes_symptoms_text = yes_symptoms.apply(lambda text: [x['text'] for x in text])
 yes_symptoms_text
 
@@ -71,16 +77,18 @@ print(count)
 yes_symptoms_text = yes_symptoms_text.apply(lambda x:x[:-1])
 yes_symptoms_text
 
+# Convert search_term to list for each patient.
+
 search_term = df['search_term']
 search_term = search_term.str.split(",")
 search_term.head(20)
-
-
 
 search_term_value = []
 for i in df['search_term']:
   for j in i:
     search_term_value.append(j)
+
+# Extract the blank space form list and values inside of it.
 
 search_term_value = [x.strip() for x in search_term_value if x.strip()]
 search_term_value
@@ -208,6 +216,8 @@ yes_symptoms_answers
 
 yes_symptoms_text.to_frame(name="yes_symptoms_text")
 
+# Convert search_term for each row to list.
+
 df['search_term'] = df['search_term'].str.split(',')
 
 df = df.drop('summary', axis=1)
@@ -221,6 +231,8 @@ df['gender'] = le.fit_transform(df['gender'])
 
 df
 
+# Create search_term_mapping for TF_IDF.
+
 search_term_list = []
 
 for index, row in df.iterrows():
@@ -229,18 +241,22 @@ for index, row in df.iterrows():
 
 search_term_list
 
+
+# ----------------------------------------------------------------------------------
+# Machine Learning part
+# ----------------------------------------------------------------------------------
+
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from collections import Counter
 from scipy.sparse import hstack
-from fastapi import FastAPI
 from pydantic import BaseModel
-
-app = FastAPI()
 
 tfidf_vectorizer = None
 knn_model = None
 symptom_dict = {}
+
+# Compile each search_term to every real symptoms.
 
 def symptom_mapping(df):
     global symptom_mapping
@@ -253,6 +269,9 @@ def symptom_mapping(df):
             if search_values not in symptom_dict:
                 symptom_dict[search_values] = []
             symptom_dict[search_values].extend(symptoms)
+
+
+# Use TF-IDF to turn words into numerical vectors.
 
 def train_model(df):
     global tfidf_vectorizer, knn_model
@@ -273,12 +292,18 @@ def train_model(df):
 
     demo_features = np.array(demo_feature)
 
+    # Combine patient profile with search_term_list.
+
     combined_features = hstack([tfidf_matrix, demo_features])
+
+    # Train model.
 
     knn_model = NearestNeighbors(n_neighbors=5, metric='cosine')
     knn_model.fit(combined_features)
 
-    print("Model training completed!")
+    print("Model training completed")
+
+# Get the high similiar symptoms from symptoms_dict.
 
 def get_recommendations_from_mapping(input_symptoms):
     recommendations = Counter()
@@ -290,6 +315,8 @@ def get_recommendations_from_mapping(input_symptoms):
                     recommendations[actual_symptom] += 1
     return dict(recommendations)
 
+# Get the high similiar symptoms from similiar patient.
+
 def get_recommendations_from_similar_patients(input_symptoms, gender, age):
     global tfidf_vectorizer, knn_model
     if tfidf_vectorizer is None or knn_model is None:
@@ -298,8 +325,14 @@ def get_recommendations_from_similar_patients(input_symptoms, gender, age):
     input_text = ' '.join(input_symptoms)
     input_tfidf = tfidf_vectorizer.transform([input_text])
 
-    gender_feat = 1 if gender == 1 else 0
-    age_feat = age / 100.0 if age else 0
+    if gender == 1:
+       gender_feat = 1
+    else: gender_feat = 0
+
+    if age:
+       age_feat = age / 100.0 
+    else: age_feat = 0
+
     demo_feat = np.array([[gender_feat, age_feat]])
 
     input_combined = hstack([input_tfidf, demo_feat])
@@ -315,6 +348,8 @@ def get_recommendations_from_similar_patients(input_symptoms, gender, age):
 
     return dict(recommendations)
 
+# Run the recommendation systems and collect the high similair symptoms score.
+
 def recommend_symptoms(input_symptoms, gender, age, top_n):
     mapping_scores = get_recommendations_from_mapping(input_symptoms)
 
@@ -328,6 +363,8 @@ def recommend_symptoms(input_symptoms, gender, age, top_n):
 
     top_recommendations = all_recommendations.most_common(top_n)
     return [symptom for symptom, _ in top_recommendations]
+
+# The main function to describe input before run other functions.
 
 def predict_symptoms(gender, age, symptoms, n_results=6):
     if gender.lower() == "male":
