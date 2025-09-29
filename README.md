@@ -1,4 +1,4 @@
-# Symptom Recommendation System
+# Symptoms Recommendation System
 
 A Python-based symptom recommendation system using TF-IDF and K-Nearest Neighbors (KNN) to suggest related symptoms for patients based on their search terms. This project include a **FastAPI** endpoint for easy integration.
 
