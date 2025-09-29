@@ -24,10 +24,12 @@ A Python-based symptom recommendation system using TF-IDF and K-Nearest Neighbor
 ```bash
 git clone https://github.com/yourusername/symptom-recommendation.git
 cd symptom-recommendation
+```
 
 2. Install Dependencies
 ```bash
 pip install -r requirements.txt
+```
 
 ## Data
 - The Dataset is **Confidential**
@@ -35,11 +37,14 @@ pip install -r requirements.txt
 ## How to Run
 ```bash
 python main.py
+```
 
 ## API
 - There are two endpoint right now, which are...
 - Health check: GET /health -- for check the fastapi if they are running normally.
 - Predict symptoms: POST /predict -- for input the patient gender, age and symptoms.
+
+## You can access locally by enter http://127.0.0.1:8000/ with "health" or "predict" path.
 
 ## Example Input
 ```bash
@@ -48,6 +53,8 @@ python main.py
   "age": 26,
   "symptoms": "ไข้"
 }
+```
+
 
 # Example Results
 ```bash
@@ -60,7 +67,12 @@ python main.py
   },
   "similiar symptoms": ["ไอ", "เจ็บคอ", "ปวดหัว"]
 }
+```
+<img width="343" height="609" alt="image" src="https://github.com/user-attachments/assets/a0888a80-7fbb-43cd-a0fb-34d26c2bc9cb" />
+
 
 # Thank for visiting my respository XD
+
+
 
 
